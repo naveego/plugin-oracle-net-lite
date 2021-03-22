@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Grpc.Core;
 using Naveego.Sdk.Plugins;
 using PluginOracleNet.Helper;
@@ -11,6 +12,10 @@ namespace PluginOracleNet
         static void Main(string[] args)
         {
             Console.WriteLine("Compile Succeeded.");
+
+            var settingsFile = System.IO.File.ReadAllText("C:\\Temp\\OracleServerSettings.json");
+            Settings settings = System.Text.Json.JsonSerializer.Deserialize<Settings>(settingsFile);
+
             /*
             try
             {

@@ -9,7 +9,8 @@ namespace PluginOracleNet.Helper
         public string Port { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
-        public string Database { get; set; }
+        public string Service_Name { get; set; }
+        public string WalletPath { get; set; }
 
         /// <summary>
         /// Validates the settings input object
@@ -22,9 +23,9 @@ namespace PluginOracleNet.Helper
                 throw new Exception("The Hostname property must be set");
             }
             
-            if (String.IsNullOrEmpty(Database))
+            if (String.IsNullOrEmpty(Service_Name))
             {
-                throw new Exception("The Database property must be set");
+                throw new Exception("The Service_Name property must be set");
             }
 
             if (String.IsNullOrEmpty(Username))
@@ -36,6 +37,12 @@ namespace PluginOracleNet.Helper
             {
                 throw new Exception("The Password property must be set");
             }
+
+            if(String.IsNullOrEmpty(Port))
+            {
+                throw new Exception("The Port property must be set");
+            }
+
         }
 
         /// <summary>
@@ -44,16 +51,8 @@ namespace PluginOracleNet.Helper
         /// <returns></returns>
         public string GetConnectionString()
         {
-            return $"Server={Hostname}; Port={Port}; Database={Database}; User={Username}; Password={Password};";
+            return $"Data Source = (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={Hostname})(PORT={Port}))(CONNECT_DATA = (SERVER = DEDICATED)(SERVICE_NAME = {Service_Name}))); User Id = {Username}; Password = {Password};";
         }
         
-        /// <summary>
-        /// Gets the database connection string
-        /// </summary>
-        /// <returns></returns>
-        public string GetConnectionString(string database)
-        {
-            return $"Server={Hostname}; Port={Port}; Database={database}; User={Username}; Password={Password};";
-        }
     }
 }
