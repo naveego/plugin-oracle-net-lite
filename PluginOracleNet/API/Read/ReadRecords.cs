@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Naveego.Sdk.Plugins;
-using System.Text.Json;
+using Newtonsoft.Json;
 using PluginOracleNet.API.Factory;
 using PluginOracleNet.Helper;
 
@@ -67,7 +67,7 @@ namespace PluginOracleNet.API.Read
                     var record = new Record
                     {
                         Action = Record.Types.Action.Upsert,
-                        DataJson = JsonSerializer.Serialize<Dictionary<string,object>>(recordMap)
+                        DataJson = JsonConvert.SerializeObject(recordMap)
                     };
 
                     yield return record;

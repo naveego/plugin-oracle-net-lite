@@ -2,64 +2,63 @@ using System;
 using System.IO;
 using System.Threading;
 using Grpc.Core;
-using Naveego.Sdk.Plugins;
-using Serilog;
 
 namespace PluginOracleNet.Helper
 {
     public static class Logger
     {
+        public enum LogLevel
+        {
+            Verbose,
+            Debug,
+            Info,
+            Error,
+            Off
+        }
+
         private static string _logPrefix = "";
-        private static string _fileName = @"plugin-oracle-net-log.txt";
+        private static string _path = @"plugin-oracle-net-log.txt";
         private static LogLevel _level = LogLevel.Info;
+        private static ReaderWriterLockSlim _readWriteLock = new ReaderWriterLockSlim();
 
         /// <summary>
-        /// Initializes the logger
+        /// Writes a log message with time stamp to a file
         /// </summary>
-        public static void Init(string logPath = "logs")
+        /// <param name="message"></param>
+        private static void Log(string message)
         {
-            // remove any existing loggers
-            CloseAndFlush();
-            
-            // ensure log directory exists
-            Directory.CreateDirectory(logPath);
-            
-            // setup serilog
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Verbose()
-                .Enrich.FromLogContext()
-                .WriteTo.Async(
-                    sinkConfig =>
-                    {
-                        sinkConfig.File(
-                            $"{logPath}/{_fileName}",
-                            rollingInterval: RollingInterval.Day,
-                            shared: true,
-                            rollOnFileSizeLimit: true
-                        );
-                        sinkConfig.Console();
-                    })
-                .CreateLogger();
+            // Set Status to Locked
+            _readWriteLock.EnterWriteLock();
+            try
+            {
+                // ensure log directory exists
+                Directory.CreateDirectory("logs");
+
+                // Append text to the file
+                var filePath = $"logs/{_logPrefix}{_path}";
+                using (StreamWriter sw = File.AppendText(filePath))
+                {
+                    sw.WriteLine($"{DateTime.Now} {message}");
+                    sw.Close();
+                }
+            }
+            finally
+            {
+                // Release lock
+                _readWriteLock.ExitWriteLock();
+            }
         }
 
-        /// <summary>
-        /// Closes the logger and flushes any pending messages in the buffer
-        /// </summary>
-        public static void CloseAndFlush()
-        {
-            Log.CloseAndFlush();
-        }
-        
         /// <summary>
         /// Deletes log file if it is older than 7 days
         /// </summary>
         public static void Clean()
         {
-            if (File.Exists(_fileName))
+            if (File.Exists(_path))
             {
-                if ((File.GetCreationTime(_fileName) - DateTime.Now).TotalDays > 7)
+                if ((File.GetCreationTime(_path) - DateTime.Now).TotalDays > 7)
                 {
-                    File.Delete(_fileName);
+                    File.Delete(_path);
                 }
             }
         }
@@ -70,30 +69,26 @@ namespace PluginOracleNet.Helper
         /// <param name="message"></param>
         public static void Verbose(string message)
         {
-            if (_level < LogLevel.Trace)
+            if (_level > LogLevel.Verbose)
             {
                 return;
             }
-            
-            GrpcEnvironment.Logger.Debug(message);
-            
-            Log.Verbose($"{_logPrefix} {message}");
+
+            Log(message);
         }
-        
+
         /// <summary>
         /// Logging method for Debug messages
         /// </summary>
         /// <param name="message"></param>
         public static void Debug(string message)
         {
-            if (_level < LogLevel.Debug)
+            if (_level > LogLevel.Debug)
             {
                 return;
             }
-            
-            GrpcEnvironment.Logger.Debug(message);
-            
-            Log.Debug($"{_logPrefix} {message}");
+
+            Log(message);
         }
         /// <summary>
         /// Logging method for Info messages
@@ -101,16 +96,14 @@ namespace PluginOracleNet.Helper
         /// <param name="message"></param>
         public static void Info(string message)
         {
-            if (_level < LogLevel.Info)
+            if (_level > LogLevel.Info)
             {
                 return;
             }
-            
-            GrpcEnvironment.Logger.Info(message);
-            
-            Log.Information($"{_logPrefix} {message}");
+
+            Log(message);
         }
-        
+
         /// <summary>
         /// Logging method for Error messages
         /// </summary>
@@ -118,16 +111,16 @@ namespace PluginOracleNet.Helper
         /// <param name="message"></param>
         public static void Error(Exception exception, string message)
         {
-            if (_level < LogLevel.Error)
+            if (_level > LogLevel.Error)
             {
                 return;
             }
-            
+
             GrpcEnvironment.Logger.Error(exception, message);
-            
-            Log.Error(exception, $"{_logPrefix} {message}");
+
+            Log(message);
         }
-        
+
         /// <summary>
         /// Logging method for Error messages to the context
         /// </summary>
@@ -136,15 +129,15 @@ namespace PluginOracleNet.Helper
         /// <param name="context"></param>
         public static void Error(Exception exception, string message, ServerCallContext context)
         {
-            if (_level < LogLevel.Error)
+            if (_level > LogLevel.Error)
             {
                 return;
             }
-            
+
             GrpcEnvironment.Logger.Error(exception, message);
             context.Status = new Status(StatusCode.Unknown, message);
-            
-            Log.Error(exception, $"{_logPrefix} {message}");
+
+            Log(message);
         }
 
         /// <summary>
@@ -162,7 +155,7 @@ namespace PluginOracleNet.Helper
         /// <param name="logPrefix"></param>
         public static void SetLogPrefix(string logPrefix)
         {
-            _logPrefix = $"<{logPrefix}>";
+            _logPrefix = logPrefix;
         }
     }
 }
