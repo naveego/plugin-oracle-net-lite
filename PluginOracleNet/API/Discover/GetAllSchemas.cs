@@ -19,47 +19,26 @@ namespace PluginOracleNet.API.Discover
         private const string Nullable = "NULLABLE";
         private const string ConstraintType = "CONSTRAINT_TYPE";
 
-//         private const string GetAllTablesAndColumnsQuery = @"
-// SELECT t.TABLE_NAME
-//      , t.TABLE_SCHEMA
-//      , t.TABLE_TYPE
-//      , c.COLUMN_NAME
-//      , c.DATA_TYPE
-//      , c.COLUMN_KEY
-//      , c.IS_NULLABLE
-//      , c.CHARACTER_MAXIMUM_LENGTH
-//
-// FROM INFORMATION_SCHEMA.TABLES AS t
-//       INNER JOIN INFORMATION_SCHEMA.COLUMNS AS c ON c.TABLE_SCHEMA = t.TABLE_SCHEMA AND c.TABLE_NAME = t.TABLE_NAME
-//
-// WHERE t.TABLE_SCHEMA NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')
-//
-// ORDER BY t.TABLE_NAME";
-
         private const string GetAllTablesAndColumnsQuery = @"
-SELECT 
-	 t.OWNER
-	 , t.TABLE_NAME
-     , c.COLUMN_NAME
-	 , c.DATA_TYPE
-     , c.DATA_LENGTH
-     , c.DATA_PRECISION
-     , c.DATA_SCALE
-     , c.NULLABLE
-     , CASE
- WHEN tc.CONSTRAINT_TYPE = 'P'
- THEN 'P'
- ELSE NULL
- END CONSTRAINT_TYPE
-FROM ALL_TABLES t
-      INNER JOIN ALL_TAB_COLUMNS c ON c.OWNER = t.OWNER AND c.TABLE_NAME = t.TABLE_NAME
-      LEFT OUTER JOIN all_cons_columns ccu
-                      ON ccu.COLUMN_NAME = c.COLUMN_NAME AND ccu.TABLE_NAME = t.TABLE_NAME AND
-                         ccu.OWNER = t.OWNER
-      LEFT OUTER JOIN SYS.ALL_CONSTRAINTS tc
-                      ON tc.CONSTRAINT_NAME = ccu.CONSTRAINT_NAME AND tc.OWNER = ccu.OWNER
-WHERE TABLESPACE_NAME NOT IN ('SYSTEM', 'SYSAUX', 'TEMP', 'DBFS_DATA') 
-ORDER BY t.TABLE_NAME";
+            SELECT 
+	            t.OWNER, 
+                t.TABLE_NAME,
+                c.COLUMN_NAME,
+                c.DATA_TYPE,
+                c.DATA_LENGTH,
+                c.DATA_PRECISION,
+                c.DATA_SCALE,
+                c.NULLABLE,
+                CASE
+                    WHEN tc.CONSTRAINT_TYPE = 'P'
+                        THEN 'P'
+                    ELSE NULL
+                END CONSTRAINT_TYPE
+            FROM ALL_TABLES t
+            INNER JOIN ALL_TAB_COLUMNS c ON c.OWNER = t.OWNER AND c.TABLE_NAME = t.TABLE_NAME
+            LEFT OUTER JOIN all_cons_columns ccu ON ccu.COLUMN_NAME = c.COLUMN_NAME AND ccu.TABLE_NAME = t.TABLE_NAME AND ccu.OWNER = t.OWNER
+            LEFT OUTER JOIN SYS.ALL_CONSTRAINTS tc ON tc.CONSTRAINT_NAME = ccu.CONSTRAINT_NAME AND tc.OWNER = ccu.OWNER
+            WHERE TABLESPACE_NAME NOT IN ('SYSTEM', 'SYSAUX', 'TEMP', 'DBFS_DATA') ORDER BY t.TABLE_NAME";
 
 
         public static async IAsyncEnumerable<Schema> GetAllSchemas(IConnectionFactory connFactory, int sampleSize = 5)
@@ -167,7 +146,7 @@ ORDER BY t.TABLE_NAME";
                     {
                         if ((decimal)dataScale == 0 || (decimal)dataScale == -127)
                         {
-                            if ((decimal) dataPrecision <= 16)
+                            if ((decimal)dataPrecision <= 16)
                             {
                                 return PropertyType.Integer;
                             }
@@ -200,7 +179,7 @@ ORDER BY t.TABLE_NAME";
                 case "NVARCHAR2":
                     if (dataLength != null)
                     {
-                        if ((decimal) dataLength >= 1024)
+                        if ((decimal)dataLength >= 1024)
                         {
                             return PropertyType.Text;
                         }
@@ -231,7 +210,7 @@ ORDER BY t.TABLE_NAME";
                     }
                     break;
             }
-            
+
             return dataType;
         }
     }

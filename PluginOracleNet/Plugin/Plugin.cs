@@ -256,8 +256,8 @@ namespace PluginOracleNet.Plugin
             Logger.SetLogPrefix("configure_replication");
             Logger.Info($"Configuring write for schema name {request.Schema.Name}...");
 
-            var schemaJson = Replication.GetSchemaJson();
-            var uiJson = Replication.GetUIJson();
+            var schemaJson = Write.GetSchemaJson();
+            var uiJson = Write.GetUIJson();
 
             try
             {

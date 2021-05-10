@@ -42,6 +42,16 @@ namespace PluginOracleNetTest.Plugin
             };
         }
 
+        // Test Variables
+
+        private static string TestSchemaID = "\"C##DEMO\".\"ACCOUNTARCHIVE\"";
+        private static string TestSchemaName = "C##DEMO.ACCOUNTARCHIVE";
+        private static int TestSampleCount = 10;
+        private static int TestPropertyCount = 11;
+
+        private static string TestPropertyID = "\"ID\"";
+        private static string TestPropertyName = "ID";
+
         [Fact]
         public async Task ConnectSessionTest()
         {
@@ -143,22 +153,23 @@ namespace PluginOracleNetTest.Plugin
 
             // assert
             Assert.IsType<DiscoverSchemasResponse>(response);
-            Assert.Equal(16, response.Schemas.Count);
+            Assert.Equal(4, response.Schemas.Count);
 
             var schema = response.Schemas[0];
-            Assert.Equal($"\"SH\".\"CHANNELS\"", schema.Id);
-            Assert.Equal("SH.CHANNELS", schema.Name);
+
+            Assert.Equal(TestSchemaID, schema.Id);
+            Assert.Equal(TestSchemaName, schema.Name);
             Assert.Equal($"", schema.Query);
-            Assert.Equal(5, schema.Sample.Count);
-            Assert.Equal(6, schema.Properties.Count);
+            Assert.Equal(TestSampleCount, schema.Sample.Count);
+            Assert.Equal(TestPropertyCount, schema.Properties.Count);
 
             var property = schema.Properties[0];
-            Assert.Equal("\"CHANNEL_ID\"", property.Id);
-            Assert.Equal("CHANNEL_ID", property.Name);
+            Assert.Equal(TestPropertyID, property.Id);
+            Assert.Equal(TestPropertyName, property.Name);
             Assert.Equal("", property.Description);
-            Assert.Equal(PropertyType.Decimal, property.Type);
-            Assert.True(property.IsKey);
-            Assert.False(property.IsNullable);
+            Assert.Equal(PropertyType.String, property.Type);
+            Assert.False(property.IsKey);
+            Assert.True(property.IsNullable);
 
             // cleanup
             await channel.ShutdownAsync();
@@ -177,10 +188,10 @@ namespace PluginOracleNetTest.Plugin
             };
             server.Start();
 
-            var port = server.Ports.First().BoundPort;
+            int port = server.Ports.First().BoundPort;
 
-            var channel = new Channel($"localhost:{port}", ChannelCredentials.Insecure);
-            var client = new Publisher.PublisherClient(channel);
+            Channel channel = new Channel($"localhost:{port}", ChannelCredentials.Insecure);
+            Publisher.PublisherClient client = new Publisher.PublisherClient(channel);
 
             var connectRequest = GetConnectSettings();
 
@@ -188,7 +199,7 @@ namespace PluginOracleNetTest.Plugin
             {
                 Mode = DiscoverSchemasRequest.Types.Mode.Refresh,
                 SampleSize = 10,
-                ToRefresh = { GetTestSchema("\"SH\".\"CHANNELS\"", "SH.CHANNELS") }
+                ToRefresh = { GetTestSchema(TestSchemaID, TestSchemaName) }
             };
 
             // act
@@ -200,19 +211,19 @@ namespace PluginOracleNetTest.Plugin
             Assert.Single(response.Schemas);
 
             var schema = response.Schemas[0];
-            Assert.Equal($"\"SH\".\"CHANNELS\"", schema.Id);
-            Assert.Equal("SH.CHANNELS", schema.Name);
+            Assert.Equal(TestSchemaID, schema.Id);
+            Assert.Equal(TestSchemaName, schema.Name);
             Assert.Equal($"", schema.Query);
-            Assert.Equal(5, schema.Sample.Count);
-            Assert.Equal(6, schema.Properties.Count);
+            Assert.Equal(TestSampleCount, schema.Sample.Count);
+            Assert.Equal(TestPropertyCount, schema.Properties.Count);
 
-            var property = schema.Properties[0];
-            Assert.Equal("\"CHANNEL_ID\"", property.Id);
-            Assert.Equal("CHANNEL_ID", property.Name);
+            var property = schema.Properties[4];
+            Assert.Equal(TestPropertyID, property.Id);
+            Assert.Equal(TestPropertyName, property.Name);
             Assert.Equal("", property.Description);
-            Assert.Equal(PropertyType.Decimal, property.Type);
-            Assert.True(property.IsKey);
-            Assert.False(property.IsNullable);
+            Assert.Equal(PropertyType.String, property.Type);
+            Assert.False(property.IsKey);
+            Assert.True(property.IsNullable);
 
             // cleanup
             await channel.ShutdownAsync();
@@ -242,7 +253,7 @@ namespace PluginOracleNetTest.Plugin
             {
                 Mode = DiscoverSchemasRequest.Types.Mode.Refresh,
                 SampleSize = 10,
-                ToRefresh = { GetTestSchema("test", "test", $"SELECT * FROM \"SH\".\"CHANNELS\"") }
+                ToRefresh = { GetTestSchema("test", "test", $"SELECT * FROM {TestSchemaID}") }
             };
 
             // act
@@ -256,17 +267,17 @@ namespace PluginOracleNetTest.Plugin
             var schema = response.Schemas[0];
             Assert.Equal($"test", schema.Id);
             Assert.Equal("test", schema.Name);
-            Assert.Equal($"SELECT * FROM \"SH\".\"CHANNELS\"", schema.Query);
-            Assert.Equal(5, schema.Sample.Count);
-            Assert.Equal(6, schema.Properties.Count);
+            Assert.Equal($"SELECT * FROM {TestSchemaID}", schema.Query);
+            Assert.Equal(TestSampleCount, schema.Sample.Count);
+            Assert.Equal(TestPropertyCount, schema.Properties.Count);
 
             var property = schema.Properties[0];
-            Assert.Equal("\"CHANNEL_ID\"", property.Id);
-            Assert.Equal("CHANNEL_ID", property.Name);
+            Assert.Equal(TestPropertyID, property.Id);
+            Assert.Equal(TestPropertyName, property.Name);
             Assert.Equal("", property.Description);
-            Assert.Equal(PropertyType.Decimal, property.Type);
+            Assert.Equal(PropertyType.String, property.Type);
             Assert.False(property.IsKey);
-            Assert.False(property.IsNullable);
+            Assert.True(property.IsNullable);
 
             // cleanup
             await channel.ShutdownAsync();
@@ -310,7 +321,7 @@ namespace PluginOracleNetTest.Plugin
             {
                 // assert
                 Assert.IsType<RpcException>(e);
-                Assert.Contains("syntax error", e.Message);
+                Assert.Contains("ORA-", e.Message);
             }
 
             // cleanup
@@ -335,7 +346,7 @@ namespace PluginOracleNetTest.Plugin
             var channel = new Channel($"localhost:{port}", ChannelCredentials.Insecure);
             var client = new Publisher.PublisherClient(channel);
 
-            var schema = GetTestSchema("\"SH\".\"CHANNELS\"", "\"SH\".\"CHANNELS\"");
+            var schema = GetTestSchema(TestSchemaID, TestSchemaName);
 
             var connectRequest = GetConnectSettings();
 
@@ -401,7 +412,7 @@ namespace PluginOracleNetTest.Plugin
             var channel = new Channel($"localhost:{port}", ChannelCredentials.Insecure);
             var client = new Publisher.PublisherClient(channel);
 
-            var schema = GetTestSchema("test", "test", $"SELECT * FROM \"SH\".\"CHANNELS\"");
+            var schema = GetTestSchema("test", "test", $"SELECT * FROM \"C##DEMO\".\"ACCOUNTARCHIVE\"");
 
             var connectRequest = GetConnectSettings();
 
