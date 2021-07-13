@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Grpc.Core;
+using Naveego.Sdk.Logging;
 using Naveego.Sdk.Plugins;
 using PluginOracleNet.Helper;
 
@@ -12,10 +13,12 @@ namespace PluginOracleNet
         {
             try
             {
+                Logger.Init();
                 // Add final chance exception handler
                 AppDomain.CurrentDomain.UnhandledException += (sender, eventArgs) =>
                 {
                     Logger.Error(null, $"died: {eventArgs.ExceptionObject}");
+                    Logger.CloseAndFlush();
                 };
 
                 // clean old logs on start up
@@ -42,12 +45,14 @@ namespace PluginOracleNet
 
                 Logger.Info("Plugin exiting...");
 
+                Logger.CloseAndFlush();
                 // shutdown server
                 server.ShutdownAsync().Wait();
             }
             catch (Exception ex)
             {
                 Logger.Error(ex, ex.Message);
+                Logger.CloseAndFlush();
             }
 
         }
