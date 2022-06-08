@@ -10,6 +10,8 @@ using Newtonsoft.Json;
 using PluginOracleNet.API.Discover;
 using PluginOracleNet.API.Factory;
 using PluginOracleNet.API.Read;
+using PluginOracleNet.API.Replication;
+using PluginOracleNet.API.Write;
 using PluginOracleNet.DataContracts;
 using PluginOracleNet.Helper;
 
@@ -58,7 +60,7 @@ namespace PluginOracleNet.Plugin
         }
         
         /// <summary>
-        /// Establishes a connection with ADW.
+        /// Establishes a connection with ODP.NET.
         /// </summary>
         /// <param name="request"></param>
         /// <param name="context"></param>
@@ -267,12 +269,83 @@ namespace PluginOracleNet.Plugin
                 Logger.Error(e, e.Message, context);
             }
         }
-
-        // TODO: Implement Replication
-
-        /*
+        
         /// <summary>
-        /// Configures replication writebacks to ADW
+        /// Creates a form and handles form updates for write backs
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public override async Task<ConfigureWriteResponse> ConfigureWrite(ConfigureWriteRequest request,
+            ServerCallContext context)
+        {
+            Logger.Info("Configuring write...");
+
+            var storedProcedures = await Write.GetAllStoredProceduresAsync(_connectionFactory);
+
+            var schemaJson = Write.GetSchemaJson();
+            var uiJson = Write.GetUIJson();
+
+            // if first call 
+            if (string.IsNullOrWhiteSpace(request.Form.DataJson) || request.Form.DataJson == "{}")
+            {
+                return new ConfigureWriteResponse
+                {
+                    Form = new ConfigurationFormResponse
+                    {
+                        DataJson = "",
+                        DataErrorsJson = "",
+                        Errors = { },
+                        SchemaJson = schemaJson,
+                        UiJson = uiJson,
+                        StateJson = ""
+                    },
+                    Schema = null
+                };
+            }
+
+            try
+            {
+                // get form data
+                var formData = JsonConvert.DeserializeObject<ConfigureWriteFormData>(request.Form.DataJson);
+                var storedProcedure = storedProcedures.Find(s => s.GetName() == formData?.StoredProcedure);
+
+                // base schema to return
+                var schema = await Write.GetSchemaForStoredProcedureAsync(_connectionFactory, storedProcedure);
+
+                return new ConfigureWriteResponse
+                {
+                    Form = new ConfigurationFormResponse
+                    {
+                        DataJson = request.Form.DataJson,
+                        Errors = { },
+                        SchemaJson = schemaJson,
+                        UiJson = uiJson,
+                        StateJson = request.Form.StateJson
+                    },
+                    Schema = schema
+                };
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e, e.Message, context);
+                return new ConfigureWriteResponse
+                {
+                    Form = new ConfigurationFormResponse
+                    {
+                        DataJson = request.Form.DataJson,
+                        Errors = {e.Message},
+                        SchemaJson = schemaJson,
+                        UiJson = uiJson,
+                        StateJson = request.Form.StateJson
+                    },
+                    Schema = null
+                };
+            }
+        }
+        
+        /// <summary>
+        /// Configures replication write-backs to ODP.NET
         /// </summary>
         /// <param name="request"></param>
         /// <param name="context"></param>
@@ -295,21 +368,7 @@ namespace PluginOracleNet.Plugin
                     var replicationFormData =
                         JsonConvert.DeserializeObject<ConfigureReplicationFormData>(request.Form.DataJson);
 
-                    replicationFormData.Owner = _server.Settings.Username.ToUpper();
-
                     errors = replicationFormData.ValidateReplicationFormData();
-
-                    return Task.FromResult(new ConfigureReplicationResponse
-                    {
-                        Form = new ConfigurationFormResponse
-                        {
-                            DataJson = JsonConvert.SerializeObject(replicationFormData),
-                            Errors = { errors },
-                            SchemaJson = schemaJson,
-                            UiJson = uiJson,
-                            StateJson = request.Form.StateJson
-                        }
-                    });
                 }
 
                 return Task.FromResult(new ConfigureReplicationResponse
@@ -317,7 +376,7 @@ namespace PluginOracleNet.Plugin
                     Form = new ConfigurationFormResponse
                     {
                         DataJson = request.Form.DataJson,
-                        Errors = { },
+                        Errors = { errors },
                         SchemaJson = schemaJson,
                         UiJson = uiJson,
                         StateJson = request.Form.StateJson
@@ -341,9 +400,9 @@ namespace PluginOracleNet.Plugin
                 });
             }
         }
-        
+
         /// <summary>
-        /// Prepares writeback settings to write to ADW
+        /// Prepares write-back settings to write to ODP.NET
         /// </summary>
         /// <param name="request"></param>
         /// <param name="context"></param>
@@ -361,7 +420,7 @@ namespace PluginOracleNet.Plugin
                 CommitSLA = request.CommitSlaSeconds,
                 Schema = request.Schema,
                 Replication = request.Replication,
-                DataVersions = request.DataVersions,
+                DataVersions = request.DataVersions
             };
 
             if (_server.WriteSettings.IsReplication())
@@ -390,7 +449,7 @@ namespace PluginOracleNet.Plugin
         
 
         /// <summary>
-        /// Writes records to ADW
+        /// Writes records to ODP.NET
         /// </summary>
         /// <param name="requestStream"></param>
         /// <param name="responseStream"></param>
@@ -401,7 +460,7 @@ namespace PluginOracleNet.Plugin
         {
             try
             {
-                Logger.Info("Writing records to Oracle ADW...");
+                Logger.Info("Writing records to Oracle ODP.NET...");
 
                 var schema = _server.WriteSettings.Schema;
                 var inCount = 0;
@@ -425,7 +484,7 @@ namespace PluginOracleNet.Plugin
                         // send record to source system
                         // add await for unit testing 
                         // removed to allow multiple to run at the same time
-                        Task.Run(
+                        /*await*/ Task.Run(
                             async () => await Replication.WriteRecordAsync(_connectionFactory, schema, record, config,
                                 responseStream), context.CancellationToken);
                     }
@@ -434,20 +493,19 @@ namespace PluginOracleNet.Plugin
                         // send record to source system
                         // add await for unit testing 
                         // removed to allow multiple to run at the same time
-                        // Task.Run(async () =>
-                        //         await Write.WriteRecordAsync(_connectionFactory, schema, record, responseStream),
-                        //     context.CancellationToken);
+                        /*await*/ Task.Run(async () =>
+                                await Write.WriteRecordAsync(_connectionFactory, schema, record, responseStream),
+                            context.CancellationToken);
                     }
                 }
 
-                Logger.Info($"Wrote {inCount} records to Oracle ADW.");
+                Logger.Info($"Wrote {inCount} records to Oracle ODP.NET.");
             }
             catch (Exception e)
             {
                 Logger.Error(e, e.Message, context);
             }
         }
-        */
 
         /// <summary>
         /// Handles disconnect requests from the agent

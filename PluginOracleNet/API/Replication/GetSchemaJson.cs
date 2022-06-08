@@ -16,7 +16,7 @@ namespace PluginOracleNet.API.Replication
                             {
                                 {"type", "string"},
                                 {"title", "Golden Record Table Name" },
-                                {"description", "Name for gold record table in Oracle.Net"}
+                                {"description", "Name for gold record table in Oracle"}
                             }
                         },
                         {
@@ -24,7 +24,7 @@ namespace PluginOracleNet.API.Replication
                             {
                                 {"type","string" },
                                 {"title", "Version Record Bucket Name" },
-                                {"description", "Name for the version record table in Oracle.Net" }
+                                {"description", "Name for the version record table in Oracle" }
                             }
                         }
                     }

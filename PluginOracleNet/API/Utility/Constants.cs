@@ -21,7 +21,7 @@ namespace PluginOracleNet.API.Utility
             new ReplicationColumn
             {
                 ColumnName = ReplicationMetaDataJobId,
-                DataType = "VARCHAR(255)",
+                DataType = "VARCHAR2(255)",
                 PrimaryKey = true
             },
             new ReplicationColumn
@@ -33,7 +33,7 @@ namespace PluginOracleNet.API.Utility
             new ReplicationColumn
             {
                 ColumnName = ReplicationMetaDataReplicatedShapeId,
-                DataType = "VARCHAR(255)",
+                DataType = "VARCHAR2(255)",
                 PrimaryKey = false
             },
             new ReplicationColumn
@@ -45,7 +45,7 @@ namespace PluginOracleNet.API.Utility
             new ReplicationColumn
             {
                 ColumnName = ReplicationMetaDataTimestamp,
-                DataType = "VARCHAR(255)",
+                DataType = "VARCHAR2(255)",
                 PrimaryKey = false
             }
         };

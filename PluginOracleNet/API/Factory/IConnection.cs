@@ -7,6 +7,7 @@ namespace PluginOracleNet.API.Factory
     {
         Task OpenAsync();
         Task CloseAsync();
+        ITransaction BeginTransaction();
         Task<bool> PingAsync();
         IDbConnection GetConnection();
     }

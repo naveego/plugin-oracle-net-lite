@@ -1,6 +1,7 @@
 ﻿using Naveego.Sdk.Plugins;
 using PluginOracleNet.DataContracts;
 using System.Collections.Generic;
+using PluginOracleNet.API.Utility;
 
 namespace PluginOracleNet.API.Replication
 {
@@ -11,7 +12,7 @@ namespace PluginOracleNet.API.Replication
         {
             var table = new ReplicationTable
             {
-                SchemaName = schemaName,
+                SchemaName = schemaName.ToAllCaps(),
                 TableName = tableName,
                 Columns = new List<ReplicationColumn>()
             };
@@ -36,11 +37,11 @@ namespace PluginOracleNet.API.Replication
             switch (dataType)
             {
                 case PropertyType.Datetime:
-                    return "VARCHAR(255)";
+                    return "VARCHAR2(255)";
                 case PropertyType.Date:
-                    return "VARCHAR(255)";
+                    return "VARCHAR2(255)";
                 case PropertyType.Time:
-                    return "VARCHAR(255)";
+                    return "VARCHAR2(255)";
                 case PropertyType.Integer:
                     return "NUMBER";
                 case PropertyType.Decimal:
@@ -50,9 +51,9 @@ namespace PluginOracleNet.API.Replication
                 case PropertyType.Bool:
                     return "BOOLEAN";
                 case PropertyType.Blob:
-                    return "BLOB";
+                    return "CLOB";
                 case PropertyType.String:
-                    return "VARCHAR(255)";
+                    return "VARCHAR2(255)";
                 case PropertyType.Text:
                     return "CLOB";
                 default:

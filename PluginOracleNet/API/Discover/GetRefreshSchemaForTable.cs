@@ -29,7 +29,7 @@ namespace PluginOracleNet.API.Discover
                 LEFT OUTER JOIN SYS.ALL_CONSTRAINTS tc ON tc.CONSTRAINT_NAME = ccu.CONSTRAINT_NAME AND tc.OWNER = ccu.OWNER
                 WHERE TABLESPACE_NAME NOT IN ('SYSTEM', 'SYSAUX', 'TEMP', 'DBFS_DATA')
                 AND t.OWNER='{0}' AND t.TABLE_NAME='{1}'
-                ORDER BY t.TABLE_NAME";
+                ORDER BY t.TABLE_NAME, c.COLUMN_ID";
 
         public static async Task<Schema> GetRefreshSchemaForTable(IConnectionFactory connFactory, Schema schema,
             int sampleSize = 5)

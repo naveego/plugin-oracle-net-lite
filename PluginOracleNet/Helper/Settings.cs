@@ -9,8 +9,7 @@ namespace PluginOracleNet.Helper
         public string Port { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
-        public string Service_Name { get; set; }
-        public string WalletPath { get; set; }
+        public string ServiceName { get; set; }
 
         /// <summary>
         /// Validates the settings input object
@@ -23,9 +22,9 @@ namespace PluginOracleNet.Helper
                 throw new Exception("The Hostname property must be set");
             }
             
-            if (String.IsNullOrEmpty(Service_Name))
+            if (String.IsNullOrEmpty(ServiceName))
             {
-                throw new Exception("The Service_Name property must be set");
+                throw new Exception("The ServiceName property must be set");
             }
 
             if (String.IsNullOrEmpty(Username))
@@ -51,7 +50,7 @@ namespace PluginOracleNet.Helper
         /// <returns></returns>
         public string GetConnectionString()
         {
-            return $"Data Source = (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={Hostname})(PORT={Port}))(CONNECT_DATA = (SERVER = DEDICATED)(SERVICE_NAME = {Service_Name}))); User Id = {Username}; Password = {Password};";
+            return $"Data Source = (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={Hostname})(PORT={Port}))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME={ServiceName}))); User Id = {Username}; Password = {Password};";
         }
         
     }

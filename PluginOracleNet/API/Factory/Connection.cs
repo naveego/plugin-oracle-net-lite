@@ -14,8 +14,6 @@ namespace PluginOracleNet.API.Factory
         {
             if (_settingsApplied == false)
             {
-                OracleConfiguration.TnsAdmin = settings.WalletPath;
-                OracleConfiguration.WalletLocation = settings.WalletPath;
                 _settingsApplied = true;
             }
 
@@ -30,6 +28,12 @@ namespace PluginOracleNet.API.Factory
         public async Task CloseAsync()
         {
             await _conn.CloseAsync();
+        }
+
+        public ITransaction BeginTransaction()
+        {
+            var txn = _conn.BeginTransaction();
+            return new Transaction(txn);
         }
 
         public Task<bool> PingAsync()

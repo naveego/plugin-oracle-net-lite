@@ -20,25 +20,25 @@ namespace PluginOracleNet.API.Discover
         private const string ConstraintType = "CONSTRAINT_TYPE";
 
         private const string GetAllTablesAndColumnsQuery = @"
-            SELECT 
-	            t.OWNER, 
-                t.TABLE_NAME,
-                c.COLUMN_NAME,
-                c.DATA_TYPE,
-                c.DATA_LENGTH,
-                c.DATA_PRECISION,
-                c.DATA_SCALE,
-                c.NULLABLE,
-                CASE
-                    WHEN tc.CONSTRAINT_TYPE = 'P'
-                        THEN 'P'
-                    ELSE NULL
-                END CONSTRAINT_TYPE
-            FROM ALL_TABLES t
-            INNER JOIN ALL_TAB_COLUMNS c ON c.OWNER = t.OWNER AND c.TABLE_NAME = t.TABLE_NAME
-            LEFT OUTER JOIN all_cons_columns ccu ON ccu.COLUMN_NAME = c.COLUMN_NAME AND ccu.TABLE_NAME = t.TABLE_NAME AND ccu.OWNER = t.OWNER
-            LEFT OUTER JOIN SYS.ALL_CONSTRAINTS tc ON tc.CONSTRAINT_NAME = ccu.CONSTRAINT_NAME AND tc.OWNER = ccu.OWNER
-            WHERE TABLESPACE_NAME NOT IN ('SYSTEM', 'SYSAUX', 'TEMP', 'DBFS_DATA') ORDER BY t.TABLE_NAME";
+SELECT 
+	t.OWNER, 
+    t.TABLE_NAME,
+    c.COLUMN_NAME,
+    c.DATA_TYPE,
+    c.DATA_LENGTH,
+    c.DATA_PRECISION,
+    c.DATA_SCALE,
+    c.NULLABLE,
+    CASE
+        WHEN tc.CONSTRAINT_TYPE = 'P'
+            THEN 'P'
+        ELSE NULL
+    END CONSTRAINT_TYPE
+FROM ALL_TABLES t
+INNER JOIN ALL_TAB_COLUMNS c ON c.OWNER = t.OWNER AND c.TABLE_NAME = t.TABLE_NAME
+LEFT OUTER JOIN all_cons_columns ccu ON ccu.COLUMN_NAME = c.COLUMN_NAME AND ccu.TABLE_NAME = t.TABLE_NAME AND ccu.OWNER = t.OWNER
+LEFT OUTER JOIN SYS.ALL_CONSTRAINTS tc ON tc.CONSTRAINT_NAME = ccu.CONSTRAINT_NAME AND tc.OWNER = ccu.OWNER
+WHERE TABLESPACE_NAME NOT IN ('SYSTEM', 'SYSAUX', 'TEMP', 'DBFS_DATA') ORDER BY t.TABLE_NAME, c.COLUMN_ID";
 
 
         public static async IAsyncEnumerable<Schema> GetAllSchemas(IConnectionFactory connFactory, int sampleSize = 5)
@@ -132,7 +132,12 @@ namespace PluginOracleNet.API.Discover
             return schema;
         }
 
-        private static PropertyType GetType(string dataType, object dataLength, object dataPrecision, object dataScale)
+        public static PropertyType GetType(string dataType)
+        {
+            return GetType(dataType, null, DBNull.Value, DBNull.Value);
+        }
+        
+        public static PropertyType GetType(string dataType, object dataLength, object dataPrecision, object dataScale)
         {
             switch (dataType)
             {
@@ -142,7 +147,7 @@ namespace PluginOracleNet.API.Discover
                 case "TIME":
                     return PropertyType.Time;
                 case "NUMBER":
-                    if (dataScale != DBNull.Value && dataPrecision != DBNull.Value)
+                    if ((dataScale != DBNull.Value || dataScale == null) && (dataPrecision != DBNull.Value || dataPrecision == null))
                     {
                         if ((decimal)dataScale == 0 || (decimal)dataScale == -127)
                         {
