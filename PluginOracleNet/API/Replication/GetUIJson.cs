@@ -9,7 +9,8 @@ namespace PluginOracleNet.API.Replication
         {
             Dictionary<string, object> UiJson = new Dictionary<string, object>
             {
-                {"ui:order", new [] {
+                {"ui:order", new [] { 
+                    "SchemaName",
                     "GoldenTableName",
                     "VersionTableName"
                 }
