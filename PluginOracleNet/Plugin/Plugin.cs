@@ -484,7 +484,7 @@ namespace PluginOracleNet.Plugin
                         // send record to source system
                         // add await for unit testing 
                         // removed to allow multiple to run at the same time
-                        /*await*/ Task.Run(
+                        Task.Run(
                             async () => await Replication.WriteRecordAsync(_connectionFactory, schema, record, config,
                                 responseStream), context.CancellationToken);
                     }
@@ -493,7 +493,7 @@ namespace PluginOracleNet.Plugin
                         // send record to source system
                         // add await for unit testing 
                         // removed to allow multiple to run at the same time
-                        /*await*/ Task.Run(async () =>
+                        Task.Run(async () =>
                                 await Write.WriteRecordAsync(_connectionFactory, schema, record, responseStream),
                             context.CancellationToken);
                     }
