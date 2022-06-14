@@ -45,6 +45,7 @@
     },
     "schema": {
       "type": "object",
+      "description": "Automatic discovery is disabled on the lite version of the Oracle plugin.",
       "properties": {
         "Hostname": {
           "type": "string",
